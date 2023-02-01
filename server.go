@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -106,7 +107,13 @@ func handleConnection(conn net.Conn) {
 
 	message := string(buffer[:])
 	data := strings.Split(message, "\r\n")
-	
+
+	if len(data) == 1 {
+		// when we only get \n instead of \r\n
+		// ex: when using nc command
+		data = strings.Split(message, "\n")
+	}
+
 	command := strings.Split(data[0], " ")
 	commandType := strings.ToLower(command[0])
 
@@ -127,8 +134,28 @@ func handleConnection(conn net.Conn) {
 		
 	} else if commandType == "set" {
 		key := command[1]
-		// numBytes := command[len(command) - 1]
-		value := data[1]
+		var value string
+		// command not from memcached client
+		if len(data) < 3 {
+			numBytes, e := strconv.Atoi(command[len(command) - 1])
+			if (e != nil) {
+				log.Fatal(err)
+				conn.Write([]byte(fmt.Sprintf("CLIENT_ERROR %v", err)))
+				return
+			}
+			valueBuffer := make([]byte, numBytes)
+			_, err := conn.Read(valueBuffer)
+			if err != nil {
+				log.Fatal(err)
+				conn.Write([]byte(fmt.Sprintf("SERVER_ERROR %v", err)))
+				return
+			}
+			value = string(valueBuffer[:])
+			value = strings.Split(value, "\r\n")[0]
+		} else {
+			// numBytes := command[len(command) - 1]
+			value = data[1]
+		}
 		persist(key, value)
 		conn.Write([]byte("STORED\r\n"))
 
