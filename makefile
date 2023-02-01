@@ -6,7 +6,7 @@ build:
 	GOARCH=amd64 GOOS=linux go build -o ${BINARY}_linux server.go
 
 run: build
-	./bin/server_darwin
+	./bin/server_linux
 
 test:
 	go test -v
