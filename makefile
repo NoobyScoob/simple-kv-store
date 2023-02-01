@@ -16,3 +16,4 @@ clean:
 	go clean
 	rm bin/*
 	rm storage/*.txt
+	./initFileSystem.sh

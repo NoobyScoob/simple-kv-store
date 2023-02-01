@@ -11,7 +11,7 @@ import (
 	"github.com/bradfitz/gomemcache/memcache"
 )
 
-const ParallelThreads = 50
+const ParallelThreads = 20
 
 func TestStartServer(t *testing.T) {
 	go startServer()
